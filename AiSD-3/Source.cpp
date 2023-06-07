@@ -6,6 +6,12 @@ struct edge {
     V dest;
     D dist;
     edge(V a, D d) : dest(a), dist(d) {}
+    bool operator==(edge e) {
+        if ((this->dest == e.dest) && (this->dist == e.dist)) {
+            return true;
+        }
+        return false;
+    }
 };
 
 template<typename V, typename D = double>
@@ -26,13 +32,16 @@ private:
         }
         return NULL;
     }
+
     int index_by_name(const V name) {
         for (int i = 0; i < graph.size(); i++) {
             if (graph[i].src == name) return i;
         }
         return -1;
     }
+
 public:
+    
     bool has_vertex(const V& v) const {
         for (int i = 0; i < graph.size(); i++) {
             if (graph[i].src == v) return true;
@@ -42,7 +51,7 @@ public:
 
     bool add_vertex(const V& v) {
         if (!has_vertex(v)) {
-            graph.push_back(vertex(v));
+            graph.push_back(vertex<V, D>(v));
             return true;
         }
         return false;
@@ -72,8 +81,8 @@ public:
     }
 
     bool has_edge (const V src, const V dest) const {
-        vertex a = find_by_name(src);
-        if (a && has_vertex(dest)) {
+        if (has_vertex(src) && has_vertex(dest)) {
+            vertex<V, D> a = find_by_name(src);
             for (int i = 0; i < a.edges.size(); i++) {
                 if (a.edges[i].dest == dest) return true;
             }
@@ -82,28 +91,54 @@ public:
     }
 
     bool has_edge (const V src, const edge<V, D> e) { //c учетом расстояния в edge
-        vertex a = find_by_name(src);
-        if (a && has_vertex(e.dest)) {
+        if (has_vertex(src) && has_vertex(e.dest)) {
+            vertex<V, D> a = find_by_name(src);
             for (int i = 0; i < a.edges.size(); i++) {
-                if ((a.edges[i].dest == e.dest) && a.edges[i].dist == e.dist) return true;
+                if (a.edges[i] == e) return true;
             }
         }
         return false;
     }
 
     bool add_edge(const V src, const V dest, const D& dist) {
-        if (has_vertex(src) && has_vertex(dest)) {
-            if (!has_edge(src, dest)) {
-                graph[index_by_name(src)].edges.push_back(edge<V, D>(dest, dist));
+        if (!has_edge(src, dest)) {
+            graph[index_by_name(src)].edges.push_back(edge<V, D>(dest, dist));
+            return true;
+        }
+        return false;
+    }
+
+    bool remove_edge(const V src, const V dest) {
+        if (has_edge(src, dest)) {
+            for (int i = 0; i < graph[index_by_name(src)].edges.size(); i++) {
+                if (graph[index_by_name(src)].edges[i].dest == dest) graph[index_by_name(src)].edges.erase(i);
                 return true;
             }
         }
         return false;
     }
-    bool remove_edge(const V from, const V to);
-    bool remove_edge(const edge<V,D> e); //c учетом расстояния
 
+    bool remove_edge(const V src, const edge<V, D> e) { //c учетом расстояния
+        if (has_edge(src, e)) {
+            for (int i = 0; i < graph[index_by_name(src)].edges.size(); i++) {
+                if (graph[index_by_name(src)].edges[i] == e) graph[index_by_name(src)].edges.erase(i);
+                return true;
+            }
+        }
+        return false;
+    }
 
+    //получение всех ребер, выходящих из вершины
+    std::vector<edge<V, D>> edges(const V src) {
+        return find_by_name(src).edges;
+    }
+
+    size_t order() const { //порядок
+        return graph.size();
+    }
+    size_t degree() const { //степень
+
+    }
 };
 
 int main() {
